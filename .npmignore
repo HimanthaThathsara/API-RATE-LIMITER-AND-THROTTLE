@@ -1,0 +1,25 @@
+# npm package
+node_modules/
+.npmrc
+.npmignore
+
+# Build
+dist/
+*.tsbuildinfo
+
+# Tests
+tests/
+coverage/
+*.test.ts
+*.spec.ts
+
+# Development
+examples/
+.vscode/
+.idea/
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
