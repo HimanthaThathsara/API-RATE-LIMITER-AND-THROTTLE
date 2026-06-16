@@ -1,93 +1,106 @@
-# API RATE LIMITER & THROTTLE
+# API Rate Limiter & Throttle
 
-A Rate Limiter With Redis,
+A compact, configurable Node.js toolkit for API rate limiting and throttling.
+Supports multiple algorithms, pluggable storage (in-memory + Redis), and an
+Express middleware adapter with production-friendly headers and hooks.
 
-- **Before you begin, make sure you have Node and Redis installed on your machine.**
+## About
 
-- **Redis** is an `in-memory key-value data storage`, so it can retrieve data very quickly.
+This project provides a single, well-documented npm package that ships
+multiple rate-limiting algorithms behind a common interface. It is designed to
+work for single-node apps (in-memory) and distributed deployments (Redis).
 
-1. Store a key like a user’s `IP address` like Identification matrix. 
-2. Increment the number of calls made from that Identification matrix. 
-3. Expire the record after a specified timeframe.
+Key goals:
+- Easy middleware integration for Express (expandable to Fastify/Koa)
+- Pluggable key generation (IP / user / API key / custom header)
+- Observable responses via `RateLimit-*` and `Retry-After` headers
+- Flexible hooks for logging, alerts, CAPTCHA, or ban actions
 
-The rate limiting have few algorithms to work with like,
-        1. Token Bucket
-        2. Leaky Bucket
- 		3. Fixed Window Counter
- 		4. Sliding Window Log
- 		5. Sliding Window Counter
- 		6. Rolling Window
- 		7. Concurrency Limit (Semaphore-based)
- 		8. Request Queue / Throttling Queue
- 		9. Exponential Backoff
- 		10.Adaptive Rate Limiting
- 		11.Distributed Rate Limiting (e.g., Redis-based)
- 		12.GCRA (Generic Cell Rate Algorithm)
- 		13.Quota-based Limiting
- 		14.Burst-based Limiting
+## Features
 
-Identify Matrix
-		[] IP Address
- 		[] User ID (from Authentication / JWT / Session ID)
- 		[] API Key or Token
- 		[] Device Fingerprint
- 		[] Geolocation
+- Algorithms: Token Bucket, Leaky Bucket, Fixed Window, Sliding Window Log,
+  Sliding Window Counter (additional algorithms can be added)
+- Storage adapters: In-memory and Redis (atomic checks via Lua can be added)
+- Per-route and per-method configuration
+- Configurable response body, status code, and headers
+- Hooks: `onAllowed`, `onBlocked`, `onLimitExceeded` for custom integrations
 
-Features in paln to impilment
- 		[] 10 Algorithems
- 		[] Custom Headers  
-                        [ Developer Option to see and test the  `how many rate limit have` and other, thing form custom headers X-RateLimit-Limit / X-RateLimit-Remaining / X-RateLimit-Reset ]
- 		[] Export the data to the database in every 1 hour
- 		[] provide the service as API and Give the report dashboard.
-                        [ Developer should see  `which API have the rate limit and not.` ]
-                        [ A suspicious increase in failed login attemps and  `sent to the original user email.` ]
- 		[] Inbuild present a CAPTCHA challenge.
- 		[] Check the Ip good or bad form list of exsisting like bot Ip collection
- 		[] A maximum of 5 accounts are allowed to be created per day from a unique source IP address.
- 		[] if attacker is try to brut force the login page catch the user id or user name and store the data to data base and inform the original user or admin.
- 		[] Dealing with bursty traffic like 100k DDOS.
- 		[] use the Least Recently Used (LRU) as a cache eviction policy for our system
+## Configuration options (recommended)
 
+- `algorithm` — 'token-bucket' | 'sliding-window' | 'fixed-window' | ...
+- `limit` — maximum requests for the window
+- `windowMs` — window length in milliseconds
+- `capacity` / `refillRate` — token-bucket specific options
+- `keyGenerator(req)` — function to derive the limiter key (IP, user id, api key)
+- `store` — memory or redis client / adapter
+- `failOpen` — boolean: allow requests when store is unavailable
+- `headers` — enable `RateLimit-*` / legacy `X-RateLimit-*`
+- `responseBody` — function to build JSON error payload
+- `onLimitExceeded(req, result)` — hook for alerts, caps, or external bans
 
+Defaults should be simple (limit, windowMs) with advanced options opt-in.
 
-- `If an IP address crosses the limit` you have set for the application, you `will call` [Cloudflare's API](https://api.cloudflare.com/) `and add the IP address to list`   You will then  `configure a Cloudflare Firewall Rule` that will  `ban all requests with IP addresses in the list.`
-- if the request is more than the limits. The rate limiter module stores and retrieves rate limit data from a backend storage system. and make report or set up the firewall rules to block that Ip or user Id. returns an appropriate HTTP response to the client.
+## Quickstart
 
-Method
-		Request queues / Throttling
- 		[]	Hard throttling
- 		[]	soft throttlin
- 		[]	dynamic throttling
+Install and start Redis (if using Redis store):
 
-		Rate Limite Level
-		[]	API level
-	 	[]	key-level
-	 	[]	user level
-	 	[]	application level
-                []      infrastructure-level
+```bash
+npm install
+# On Debian/Ubuntu
+sudo apt update && sudo apt install redis-server
+sudo systemctl start redis-server
+redis-cli ping # should print PONG
+```
 
+Run the example app:
 
-configuration options 
-        []  windowMs
-        []  limit
-        []  Developer Option (Custom Headers)
+```bash
+node index.js
+# Visit http://localhost:3000
+```
 
-Step 1 :
-    npm install
-    sudo apt update && sudo apt install redis-server
-    redis-server       # or just: sudo systemctl start redis-server
-    redis-cli ping     # it print "PONG"
+Use `curl -i` to inspect headers on a rate-limited route.
 
+## Development & Running
 
-step 2 :
-    node index.js      # connected to redis
-                       # Example app listening at http://localhost:3000
+For local development the project supports the standard Node workflow. For more
+complex integration (end-to-end, multi-service), a Docker-compose setup is
+recommended.
 
+Example: start local development services with Docker Compose:
 
-step 3 :
-    # `GET /` is unprotected  just returns, Hello World!.
-    curl http://localhost:3000/
+```bash
+docker-compose -f ./docker-compose.Development.Infrastructure.yaml up -d
+```
 
-    # `POST /` is the rate-limited route (10 requests / 10 seconds). 
-    #  Use -i to see the headers
-    curl -i -X POST http://localhost:3000/
+Or start individual dev services as needed (e.g., Redis via Docker).
+
+## Tests
+
+Unit and integration tests are expected. Add and run tests with your preferred
+test runner (e.g., `npm test`).
+
+## Contributing
+
+The project welcomes contributions. Please follow these steps before opening a
+PR:
+
+1. Read the `CONTRIBUTING.md` guide (if present) and the project coding style.
+2. Open an issue first to discuss large changes or new algorithms.
+3. Fork the repo, create a feature branch, and write tests for new behavior.
+4. Keep commits small and descriptive; follow the repo's commit message style.
+5. Submit a pull request and link it to the issue; maintainers will review it.
+
+Reporting security vulnerabilities: do not post details in public issues —
+contact the maintainers directly.
+
+## License
+
+This repository includes work under the repository license. See the `LICENSE` file
+for full details.
+
+## Authors & Acknowledgements
+
+This project is inspired by several community projects and patterns. Thanks to
+the open-source projects and authors whose ideas shaped this toolkit.
+

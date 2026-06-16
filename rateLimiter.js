@@ -1,5 +1,5 @@
 /**
- * Configurable rate-limiting middleware factory.
+ * Configurable rate-limiter middleware.
  *
  * This is the "library" half of the package: it knows nothing about Redis, messages, or routes  every behavior is driven by `options`.
  * storage is delegated to a pluggable `store` redisStore.js.

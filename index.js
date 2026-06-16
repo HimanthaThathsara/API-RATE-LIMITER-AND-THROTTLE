@@ -3,14 +3,16 @@
  * value is not hardcoded, developer can configure it.
  *
  * can creates & passes their own client
- * rate limit max
- * window Ms size
- * keyGenerator
- * message
- * route handler
- * standardHeaders or legacyHeaders
- * passOnStoreError
+ *  - rate limit max
+ *  -  window Ms size
+ *  - keyGenerator
+ *  - message
+ *  - route handler
+ *  - standardHeaders or legacyHeaders
+ *  - passOnStoreError
  */
+
+
 const express = require('express');
 const Redis = require('ioredis');
 const { createRateLimiter } = require('./rateLimiter');
